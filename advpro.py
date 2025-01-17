@@ -6,7 +6,7 @@ import ast
 import numpy as np
 
 # Load the model and tokenizer
-MODEL_NAME = "Salesforce/codegen-16b-mono"
+MODEL_NAME = "Salesforce/codegen-2b-mono"
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map="auto")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
@@ -75,7 +75,7 @@ def apply_mutation(code_prompt, mutation_type):
 
 # Main workflow
 if __name__ == "__main__":
-    dataset_dir = "path_to_dataset"
+    dataset_dir = "dataset_py"
     sample_dir = "CVE-2009-5145/2abdf14620f146857dc8e3ffd2b6a754884c331d"
 
     # Load the sample
