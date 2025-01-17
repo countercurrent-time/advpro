@@ -36,6 +36,7 @@ def load_sample(base_dir, cve_id, commit_id):
 # Compute gradients to identify important tokens
 def compute_gradients(model, tokenizer, code_prompt, safe_label, unsafe_label):
     inputs = tokenizer(code_prompt, return_tensors="pt", padding=True).to(model.device)
+    inputs["input_ids"] = inputs["input_ids"].clone().detach().requires_grad_(True)
 
     safe_token = tokenizer(safe_label, return_tensors="pt").input_ids[0]
     unsafe_token = tokenizer(unsafe_label, return_tensors="pt").input_ids[0]
