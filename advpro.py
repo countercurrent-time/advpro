@@ -9,6 +9,7 @@ import numpy as np
 MODEL_NAME = "Salesforce/codegen-2b-mono"
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map="auto")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+tokenizer.pad_token = tokenizer.eos_token
 
 # Function to load data from the dataset
 def load_sample(base_dir, cve_id, commit_id):
