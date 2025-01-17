@@ -39,6 +39,9 @@ def compute_gradients(model, tokenizer, code_prompt, safe_label, unsafe_label):
     safe_token = tokenizer(safe_label, return_tensors="pt").input_ids[0]
     unsafe_token = tokenizer(unsafe_label, return_tensors="pt").input_ids[0]
 
+    safe_token = safe_token.to(model.device)
+    unsafe_token = unsafe_token.to(model.device)
+
     outputs = model(**inputs, labels=inputs["input_ids"])
     logits = outputs.logits
     
