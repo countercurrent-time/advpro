@@ -11,10 +11,18 @@ model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map="auto")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 # Function to load data from the dataset
-def load_sample(base_dir, sample_dir):
-    json_path = os.path.join(base_dir, sample_dir, f"{sample_dir}.json")
-    py_path = os.path.join(base_dir, sample_dir, f"{sample_dir}.py")
+def load_sample(base_dir, cve_id, commit_id):
+    sample_dir = os.path.join(base_dir, cve_id, commit_id)
     
+    json_file = [f for f in os.listdir(sample_dir) if f.endswith('.json')]
+    py_file = [f for f in os.listdir(sample_dir) if f.endswith('.py')]
+
+    if not json_file or not py_file:
+        raise FileNotFoundError("JSON or Python file is missing in the specified directory.")
+
+    json_path = os.path.join(sample_dir, json_file[0])
+    py_path = os.path.join(sample_dir, py_file[0])
+
     with open(json_path, 'r') as f:
         json_data = json.load(f)
 
@@ -76,10 +84,11 @@ def apply_mutation(code_prompt, mutation_type):
 # Main workflow
 if __name__ == "__main__":
     dataset_dir = "dataset_py"
-    sample_dir = "CVE-2009-5145/2abdf14620f146857dc8e3ffd2b6a754884c331d"
+    cve_id = "CVE-2009-5145"
+    commit_id = "2abdf14620f146857dc8e3ffd2b6a754884c331d"
 
     # Load the sample
-    sample_data, code_prompt = load_sample(dataset_dir, sample_dir)
+    sample_data, code_prompt = load_sample(dataset_dir, cve_id, commit_id)
 
     # Compute gradients
     importance_scores = compute_gradients(
