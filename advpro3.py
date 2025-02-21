@@ -31,7 +31,8 @@ class AdvPro:
         position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
         
         # 调用模型，传入 inputs_embeds 和 position_ids
-        outputs = self.model(inputs_embeds=embeddings, position_ids=position_ids)
+        # outputs = self.model(inputs_embeds=embeddings, position_ids=position_ids)
+        outputs = self.model(**inputs, labels=inputs["input_ids"])
         logits = outputs.logits  # [1, seq_len, vocab_size]
         
         # 取最后一个位置作为下一个 token 的预测
