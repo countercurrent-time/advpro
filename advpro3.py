@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import random
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1' # 下面老是报错 shape 不一致
+
 class AdvPro:
     def __init__(self, model_name, device='cuda' if torch.cuda.is_available() else 'cpu'):
         self.device = device
