@@ -17,7 +17,11 @@ class AdvPro:
         # 检查关键词是否存在
         if unsafe_keyword is None or safe_keyword is None:
             raise ValueError("必须提供 unsafe_keyword 和 safe_keyword")
-        
+        print(f"prompt: {prompt}")
+        print(f"unsafe_keyword: {unsafe_keyword}")
+        print(f"safe_keyword: {safe_keyword}")
+
+
         # 标准方式获得 input_ids
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         input_ids = inputs["input_ids"]
