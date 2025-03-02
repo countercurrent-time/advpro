@@ -226,15 +226,15 @@ class AdvPro:
         input_ids = inputs["input_ids"]
         
         # 如果模型被 DataParallel 包裹，则获取 underlying module
-        model = model.module
+        # model = model.module
         
-        embeddings = model.transformer.wte(input_ids)
+        embeddings = model.module.transformer.wte(input_ids)
         embeddings = embeddings.clone().detach().requires_grad_(True)
         
         seq_length = input_ids.size(1)
         position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
         
-        outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
+        outputs = model.module(inputs_embeds=embeddings, position_ids=position_ids)
         logits = outputs.logits  # [1, seq_length, vocab_size]
         
         next_token_logits = logits[0, -1]
