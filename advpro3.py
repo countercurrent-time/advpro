@@ -479,11 +479,11 @@ class AdvPro:
             
             inputs = tokenizer(current_prompt, return_tensors="pt").to(self.device)
             
-            # 对于输入上限为2000个 token 的 CodeGen2-1B，检查 token 数量是否超过 2000
-            if inputs["input_ids"].shape[1] > 2000:
-                inputs["input_ids"] = inputs["input_ids"][:, -2000:]
+            # 对于输入上限为1500个 token 的 CodeGen2-1B，检查 token 数量是否超过 1500
+            if inputs["input_ids"].shape[1] > 1500:
+                inputs["input_ids"] = inputs["input_ids"][:, -1500:]
                 if "attention_mask" in inputs:
-                    inputs["attention_mask"] = inputs["attention_mask"][:, -2000:]
+                    inputs["attention_mask"] = inputs["attention_mask"][:, -1500:]
             inputs = inputs.to(self.device)
             
             # with torch.no_grad():
