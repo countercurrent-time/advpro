@@ -478,6 +478,14 @@ class AdvPro:
                     print("No mutation applied in this iteration.")
             
             inputs = tokenizer(current_prompt, return_tensors="pt").to(self.device)
+            
+            # 对于输入上限为2048个 token 的 CodeGen2-1B，检查 token 数量是否超过 2048
+            if inputs["input_ids"].shape[1] > 2048:
+                inputs["input_ids"] = inputs["input_ids"][:, -2048:]
+                if "attention_mask" in inputs:
+                    inputs["attention_mask"] = inputs["attention_mask"][:, -2048:]
+            inputs = inputs.to(self.device)
+            
             # with torch.no_grad():
             generated_ids = model.generate(**inputs, max_new_tokens=50, stopping_criteria=stopping_criteria)
             
