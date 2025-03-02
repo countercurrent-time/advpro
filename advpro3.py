@@ -55,10 +55,17 @@ stopping_criteria.append(StopAtSpecificTokenCriteria(token_id_list=[198]))
 MODEL_NAME = "Salesforce/codegen2-1B"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+# tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+# model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, trust_remote_code=True, revision="main")
+# model.to(DEVICE)
+# model.eval()
+
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, trust_remote_code=True, revision="main")
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+model = torch.nn.DataParallel(model)  # 使用 DataParallel 包裹模型
 model.to(DEVICE)
 model.eval()
+
 
 
 def extract_identifiers(code: str) -> set:
