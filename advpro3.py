@@ -449,7 +449,7 @@ def traverse_directory(root_dir):
                                 break
 
 if __name__ == '__main__':
-    dataset_dir = '../advpro-dataset/dataset_py'
+    dataset_dir = '../advpro-dataset/dataset_py/'
     # traverse_directory(dataset_dir)
     # json_file_path = 'advpro-dataset/dataset_py/CVE-2009-5145/2abdf14620f146857dc8e3ffd2b6a754884c331d/ZRPythonExpr_1.json'
     # py_file_path = 'advpro-dataset/dataset_py/CVE-2009-5145/2abdf14620f146857dc8e3ffd2b6a754884c331d/ZRPythonExpr_1.py'
@@ -458,8 +458,8 @@ if __name__ == '__main__':
     # json_file_path = 'advpro-dataset/dataset_py/CVE-2017-16618/5d0575303f6df869a515ced4285f24ba721e0d4e/util_2.json'
     # py_file_path = 'advpro-dataset/dataset_py/CVE-2017-16618/5d0575303f6df869a515ced4285f24ba721e0d4e/util_2.py'
 
-    json_file_path = 'advpro-dataset/dataset_py/CVE-2011-4104/e8af315211b07c8f48f32a063233cc3f76dd5bc2/serializers_1.json'
-    py_file_path = 'advpro-dataset/dataset_py/CVE-2011-4104/e8af315211b07c8f48f32a063233cc3f76dd5bc2/serializers_1.py'
+    json_file_path = dataset_dir + 'CVE-2011-4104/e8af315211b07c8f48f32a063233cc3f76dd5bc2/serializers_1.json'
+    py_file_path = dataset_dir + 'CVE-2011-4104/e8af315211b07c8f48f32a063233cc3f76dd5bc2/serializers_1.py'
     
     print(f"\nProcessing: {json_file_path}, {py_file_path}")
     generated_code = process_sample(json_file_path, py_file_path)
