@@ -177,8 +177,8 @@ class AdvPro:
         position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
         
         # 前向传播，传入 inputs_embeds 和 position_ids
-        with torch.no_grad():
-            outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
+        # with torch.no_grad():
+        outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
         logits = outputs.logits  # [1, seq_length, vocab_size]
         
         # 取最后一个 token 位置的 logits，并计算 log softmax
@@ -374,8 +374,8 @@ class AdvPro:
                     print("No mutation applied in this iteration.")
             
             inputs = tokenizer(current_prompt, return_tensors="pt").to(self.device)
-            with torch.no_grad():
-                generated_ids = model.generate(**inputs, max_new_tokens=50, stopping_criteria=stopping_criteria)
+            # with torch.no_grad():
+            generated_ids = model.generate(**inputs, max_new_tokens=50, stopping_criteria=stopping_criteria)
             
             # 裁剪掉输入部分：即只取生成部分
             input_length = inputs['input_ids'].shape[1]
