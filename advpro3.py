@@ -157,61 +157,61 @@ class AdvPro:
         self.device = DEVICE
     
     # # 没有使用 DataParallel 的情况
-    # def compute_importance(self, prompt, unsafe_keyword, safe_keyword):
-    #     # 调试打印三个参数
-    #     print("调试信息：")
-    #     # print("prompt:", prompt)
-    #     # print("unsafe_keyword:", unsafe_keyword)
-    #     # print("safe_keyword:", safe_keyword)
+    def compute_importance(self, prompt, unsafe_keyword, safe_keyword):
+        # 调试打印三个参数
+        print("调试信息：")
+        # print("prompt:", prompt)
+        # print("unsafe_keyword:", unsafe_keyword)
+        # print("safe_keyword:", safe_keyword)
         
-    #     # 将 prompt 编码为输入张量
-    #     inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
+        # 将 prompt 编码为输入张量
+        inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
         
-    #     # 对于输入上限为2048个 token 的 CodeGen2-1B，检查 token 数量是否超过 2048
-    #     if inputs["input_ids"].shape[1] > 2048:
-    #         inputs["input_ids"] = inputs["input_ids"][:, -2048:]
-    #         if "attention_mask" in inputs:
-    #             inputs["attention_mask"] = inputs["attention_mask"][:, -2048:]
-    #     inputs = inputs.to(self.device)
+        # 对于输入上限为2048个 token 的 CodeGen2-1B，检查 token 数量是否超过 2048
+        if inputs["input_ids"].shape[1] > 2048:
+            inputs["input_ids"] = inputs["input_ids"][:, -2048:]
+            if "attention_mask" in inputs:
+                inputs["attention_mask"] = inputs["attention_mask"][:, -2048:]
+        inputs = inputs.to(self.device)
         
-    #     input_ids = inputs["input_ids"]
+        input_ids = inputs["input_ids"]
         
-    #     # 计算词嵌入，并确保它们可用于梯度计算
-    #     embeddings = model.transformer.wte(input_ids)
-    #     embeddings = embeddings.clone().detach().requires_grad_(True)
+        # 计算词嵌入，并确保它们可用于梯度计算
+        embeddings = model.transformer.wte(input_ids)
+        embeddings = embeddings.clone().detach().requires_grad_(True)
         
-    #     # 构造 position_ids，与输入长度一致
-    #     seq_length = input_ids.size(1)
-    #     position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
+        # 构造 position_ids，与输入长度一致
+        seq_length = input_ids.size(1)
+        position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
         
-    #     # 前向传播，传入 inputs_embeds 和 position_ids
-    #     # with torch.no_grad():
-    #     outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
-    #     logits = outputs.logits  # [1, seq_length, vocab_size]
+        try:
+            # 前向传播，传入 inputs_embeds 和 position_ids
+            # with torch.no_grad():
+            outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
+            logits = outputs.logits  # [1, seq_length, vocab_size]
+            
+            # 取最后一个 token 位置的 logits，并计算 log softmax
+            next_token_logits = logits[0, -1]  # [vocab_size]
+            log_probs = torch.log_softmax(next_token_logits, dim=-1)
+            
+            # 对 unsafe_keyword 和 safe_keyword 编码（取首个 token）
+            unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
+            safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
+            if not unsafe_ids or not safe_ids:
+                raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
+            unsafe_token_id = unsafe_ids[0]
+            safe_token_id = safe_ids[0]
+            
+            unsafe_log_prob = log_probs[unsafe_token_id]
+            safe_log_prob = log_probs[safe_token_id]
+            score = unsafe_log_prob - safe_log_prob
         
-    #     # 取最后一个 token 位置的 logits，并计算 log softmax
-    #     next_token_logits = logits[0, -1]  # [vocab_size]
-    #     log_probs = torch.log_softmax(next_token_logits, dim=-1)
-        
-    #     # 对 unsafe_keyword 和 safe_keyword 编码（取首个 token）
-    #     unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
-    #     safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
-    #     if not unsafe_ids or not safe_ids:
-    #         raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
-    #     unsafe_token_id = unsafe_ids[0]
-    #     safe_token_id = safe_ids[0]
-        
-    #     unsafe_log_prob = log_probs[unsafe_token_id]
-    #     safe_log_prob = log_probs[safe_token_id]
-    #     score = unsafe_log_prob - safe_log_prob
-        
-    #     # 使用 torch.autograd.grad() 获取目标标量对 embeddings 的梯度
-    #     grads = torch.autograd.grad(score, embeddings)[0]  # 形状: [1, seq_length, embed_dim]
-        
-    #     # 对每个 token 的梯度向量计算 L2 范数作为重要性分数
-    #     importance_scores = torch.norm(grads[0], dim=-1)  # 形状: [seq_length]
-        
-    #     return input_ids[0], importance_scores.detach()
+            grads = torch.autograd.grad(score, embeddings)[0]  # shape: [1, seq_length, embed_dim]
+            importance_scores = torch.norm(grads[0], dim=-1)    # 形状: [seq_length]
+        except Exception as e:
+            importance_scores = torch.ones(input_ids.size(1), device=self.device)
+
+        return input_ids[0], importance_scores.detach()
 
     # 使用 DataParallel 的情况，但是不可行。
     # def compute_importance(self, prompt, unsafe_keyword, safe_keyword):
@@ -256,55 +256,56 @@ class AdvPro:
     #     importance_scores = torch.norm(grads[0], dim=-1)
     #     return input_ids[0], importance_scores.detach()
 
-    def compute_importance(self, prompt, unsafe_keyword, safe_keyword):
-        # 打印调试信息
-        print("调试信息：")
-        print("prompt:", prompt)
-        print("unsafe_keyword:", unsafe_keyword)
-        print("safe_keyword:", safe_keyword)
+    # try catch error
+    # def compute_importance(self, prompt, unsafe_keyword, safe_keyword):
+    #     # 打印调试信息
+    #     print("调试信息：")
+    #     print("prompt:", prompt)
+    #     print("unsafe_keyword:", unsafe_keyword)
+    #     print("safe_keyword:", safe_keyword)
         
-        if unsafe_keyword is None or safe_keyword is None:
-            raise ValueError("必须提供 unsafe_keyword 和 safe_keyword")
+    #     if unsafe_keyword is None or safe_keyword is None:
+    #         raise ValueError("必须提供 unsafe_keyword 和 safe_keyword")
         
-        # 将 prompt 编码为输入张量
-        inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
-        input_ids = inputs["input_ids"]
+    #     # 将 prompt 编码为输入张量
+    #     inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
+    #     input_ids = inputs["input_ids"]
                 
-        # 获取词嵌入并确保可以计算梯度
-        embeddings = model.transformer.wte(input_ids)
-        embeddings = embeddings.clone().detach().requires_grad_(True)
+    #     # 获取词嵌入并确保可以计算梯度
+    #     embeddings = model.transformer.wte(input_ids)
+    #     embeddings = embeddings.clone().detach().requires_grad_(True)
         
-        # 构造 position_ids（长度与 input_ids 相同）
-        seq_length = input_ids.size(1)
-        position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
+    #     # 构造 position_ids（长度与 input_ids 相同）
+    #     seq_length = input_ids.size(1)
+    #     position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
         
-        # 前向传播：传入 inputs_embeds 和 position_ids
-        outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
-        logits = outputs.logits  # shape: [1, seq_length, vocab_size]
+    #     # 前向传播：传入 inputs_embeds 和 position_ids
+    #     outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
+    #     logits = outputs.logits  # shape: [1, seq_length, vocab_size]
         
-        # 取最后一个 token 的 logits，计算 log softmax
-        next_token_logits = logits[0, -1]
-        log_probs = torch.log_softmax(next_token_logits, dim=-1)
+    #     # 取最后一个 token 的 logits，计算 log softmax
+    #     next_token_logits = logits[0, -1]
+    #     log_probs = torch.log_softmax(next_token_logits, dim=-1)
         
-        # 对 unsafe_keyword 和 safe_keyword 进行编码，取第一个 token 的 id
-        unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
-        safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
-        if not unsafe_ids or not safe_ids:
-            raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
-        unsafe_token_id = unsafe_ids[0]
-        safe_token_id = safe_ids[0]
+    #     # 对 unsafe_keyword 和 safe_keyword 进行编码，取第一个 token 的 id
+    #     unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
+    #     safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
+    #     if not unsafe_ids or not safe_ids:
+    #         raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
+    #     unsafe_token_id = unsafe_ids[0]
+    #     safe_token_id = safe_ids[0]
         
-        unsafe_log_prob = log_probs[unsafe_token_id]
-        safe_log_prob = log_probs[safe_token_id]
-        score = unsafe_log_prob - safe_log_prob
+    #     unsafe_log_prob = log_probs[unsafe_token_id]
+    #     safe_log_prob = log_probs[safe_token_id]
+    #     score = unsafe_log_prob - safe_log_prob
         
-        try:
-            grads = torch.autograd.grad(score, embeddings)[0]  # shape: [1, seq_length, embed_dim]
-            importance_scores = torch.norm(grads[0], dim=-1)    # 形状: [seq_length]
-        except Exception as e:
-            importance_scores = torch.ones(input_ids.size(1), device=self.device)
+    #     try:
+    #         grads = torch.autograd.grad(score, embeddings)[0]  # shape: [1, seq_length, embed_dim]
+    #         importance_scores = torch.norm(grads[0], dim=-1)    # 形状: [seq_length]
+    #     except Exception as e:
+    #         importance_scores = torch.ones(input_ids.size(1), device=self.device)
         
-        return input_ids[0], importance_scores.detach()
+    #     return input_ids[0], importance_scores.detach()
 
 
     # 旧的更复杂版本
