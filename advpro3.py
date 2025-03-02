@@ -62,7 +62,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
-model = torch.nn.DataParallel(model)  # 使用 DataParallel 包裹模型
+# model = torch.nn.DataParallel(model)  # 使用 DataParallel 包裹模型
 model.to(DEVICE)
 model.eval()
 
