@@ -226,7 +226,7 @@ class AdvPro:
         input_ids = inputs["input_ids"]
         
         # 如果模型被 DataParallel 包裹，则获取 underlying module
-        # model = model.module if hasattr(model, "module") else model
+        model = model.module
         
         embeddings = model.transformer.wte(input_ids)
         embeddings = embeddings.clone().detach().requires_grad_(True)
