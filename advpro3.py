@@ -215,18 +215,18 @@ class AdvPro:
 
     def compute_importance(self, prompt, unsafe_keyword, safe_keyword):
         print("调试信息：")
-        print("prompt:", prompt)
-        print("unsafe_keyword:", unsafe_keyword)
-        print("safe_keyword:", safe_keyword)
+        # print("prompt:", prompt)
+        # print("unsafe_keyword:", unsafe_keyword)
+        # print("safe_keyword:", safe_keyword)
         
         if unsafe_keyword is None or safe_keyword is None:
             raise ValueError("必须提供 unsafe_keyword 和 safe_keyword")
         
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+        inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
         input_ids = inputs["input_ids"]
         
         # 如果模型被 DataParallel 包裹，则获取 underlying module
-        model = self.model.module if hasattr(self.model, "module") else self.model
+        model = model.module if hasattr(model, "module") else model
         
         embeddings = model.transformer.wte(input_ids)
         embeddings = embeddings.clone().detach().requires_grad_(True)
@@ -240,8 +240,8 @@ class AdvPro:
         next_token_logits = logits[0, -1]
         log_probs = torch.log_softmax(next_token_logits, dim=-1)
         
-        unsafe_ids = self.tokenizer.encode(unsafe_keyword, add_special_tokens=False)
-        safe_ids = self.tokenizer.encode(safe_keyword, add_special_tokens=False)
+        unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
+        safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
         if not unsafe_ids or not safe_ids:
             raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
         unsafe_token_id = unsafe_ids[0]
