@@ -449,7 +449,7 @@ def traverse_directory(root_dir):
                                 break
 
 if __name__ == '__main__':
-    dataset_dir = 'advpro-dataset/dataset_py'
+    dataset_dir = '../advpro-dataset/dataset_py'
     # traverse_directory(dataset_dir)
     # json_file_path = 'advpro-dataset/dataset_py/CVE-2009-5145/2abdf14620f146857dc8e3ffd2b6a754884c331d/ZRPythonExpr_1.json'
     # py_file_path = 'advpro-dataset/dataset_py/CVE-2009-5145/2abdf14620f146857dc8e3ffd2b6a754884c331d/ZRPythonExpr_1.py'
