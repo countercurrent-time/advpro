@@ -184,29 +184,32 @@ class AdvPro:
         seq_length = input_ids.size(1)
         position_ids = torch.arange(0, seq_length, dtype=torch.long, device=self.device).unsqueeze(0)
         
-        # 前向传播，传入 inputs_embeds 和 position_ids
-        # with torch.no_grad():
-        outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
-        logits = outputs.logits  # [1, seq_length, vocab_size]
+        try:
+            # 前向传播，传入 inputs_embeds 和 position_ids
+            # with torch.no_grad():
+            outputs = model(inputs_embeds=embeddings, position_ids=position_ids)
+            logits = outputs.logits  # [1, seq_length, vocab_size]
+            
+            # 取最后一个 token 位置的 logits，并计算 log softmax
+            next_token_logits = logits[0, -1]  # [vocab_size]
+            log_probs = torch.log_softmax(next_token_logits, dim=-1)
+            
+            # 对 unsafe_keyword 和 safe_keyword 编码（取首个 token）
+            unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
+            safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
+            if not unsafe_ids or not safe_ids:
+                raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
+            unsafe_token_id = unsafe_ids[0]
+            safe_token_id = safe_ids[0]
+            
+            unsafe_log_prob = log_probs[unsafe_token_id]
+            safe_log_prob = log_probs[safe_token_id]
+            score = unsafe_log_prob - safe_log_prob
         
-        # 取最后一个 token 位置的 logits，并计算 log softmax
-        next_token_logits = logits[0, -1]  # [vocab_size]
-        log_probs = torch.log_softmax(next_token_logits, dim=-1)
-        
-        # 对 unsafe_keyword 和 safe_keyword 编码（取首个 token）
-        unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
-        safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
-        if not unsafe_ids or not safe_ids:
-            raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
-        unsafe_token_id = unsafe_ids[0]
-        safe_token_id = safe_ids[0]
-        
-        unsafe_log_prob = log_probs[unsafe_token_id]
-        safe_log_prob = log_probs[safe_token_id]
-        score = unsafe_log_prob - safe_log_prob
-    
-        grads = torch.autograd.grad(score, embeddings)[0]  # shape: [1, seq_length, embed_dim]
-        importance_scores = torch.norm(grads[0], dim=-1)    # 形状: [seq_length]
+            grads = torch.autograd.grad(score, embeddings)[0]  # shape: [1, seq_length, embed_dim]
+            importance_scores = torch.norm(grads[0], dim=-1)    # 形状: [seq_length]
+        except Exception as e:
+            importance_scores = torch.ones(input_ids.size(1), device=self.device)
 
         return input_ids[0], importance_scores.detach()
 
