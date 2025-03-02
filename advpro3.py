@@ -267,12 +267,9 @@ class AdvPro:
             raise ValueError("必须提供 unsafe_keyword 和 safe_keyword")
         
         # 将 prompt 编码为输入张量
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+        inputs = tokenizer(prompt, return_tensors="pt").to(self.device)
         input_ids = inputs["input_ids"]
-        
-        # 如果模型被 DataParallel 包装，则取 underlying module
-        model = self.model.module if hasattr(self.model, "module") else self.model
-        
+                
         # 获取词嵌入并确保可以计算梯度
         embeddings = model.transformer.wte(input_ids)
         embeddings = embeddings.clone().detach().requires_grad_(True)
@@ -290,8 +287,8 @@ class AdvPro:
         log_probs = torch.log_softmax(next_token_logits, dim=-1)
         
         # 对 unsafe_keyword 和 safe_keyword 进行编码，取第一个 token 的 id
-        unsafe_ids = self.tokenizer.encode(unsafe_keyword, add_special_tokens=False)
-        safe_ids = self.tokenizer.encode(safe_keyword, add_special_tokens=False)
+        unsafe_ids = tokenizer.encode(unsafe_keyword, add_special_tokens=False)
+        safe_ids = tokenizer.encode(safe_keyword, add_special_tokens=False)
         if not unsafe_ids or not safe_ids:
             raise ValueError("unsafe_keyword 和 safe_keyword 不应为空")
         unsafe_token_id = unsafe_ids[0]
